@@ -1,11 +1,17 @@
-"""Needed classes for implementing the Iterable interface for different types of objects."""
 
-import RemoteTypes as rt  # noqa: F401; pylint: disable=import-error
+from typing import Optional, Iterable
+import Ice  # type: ignore
+import RemoteTypes as rt
+from remotetypes.customset import StringSet  # noqa: F401; pylint: disable=import-error
 
-# TODO: It's very likely that the same Iterable implementation doesn't fit
-# for the 3 needed types. It is valid to implement 3 different classes implementing
-# the same interface and use an object from different implementations when needed.
+class RemoteIterator(rt.Iterable):
+    """Implementation of the remote interface Iterable."""
+    def __init__(self, rset):
+        self._rset = rset
+        self._iterator = iter(self._rset.items)  # Crea un iterador sobre los elementos del conjunto
 
-
-class Iterable(rt.Iterable):
-    """Skeleton for an Iterable implementation."""
+    def __next__(self):
+        try:
+            return next(self._iterator)  # Devuelve el siguiente elemento
+        except StopIteration:
+            raise rt.StopIteration()  # Lanza StopIteration cuando no hay más elementos

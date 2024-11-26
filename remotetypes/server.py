@@ -2,7 +2,7 @@
 
 import logging
 
-import Ice
+import Ice # type: ignore
 
 from remotetypes.factory import Factory
 
