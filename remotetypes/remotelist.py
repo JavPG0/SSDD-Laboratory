@@ -2,7 +2,7 @@ from typing import Optional
 import Ice  # type: ignore
 import RemoteTypes as rt  # noqa: F401; pylint: disable=import-error
 from remotetypes.customset import StringSet
-#from remotetypes.iterable import ListIterable
+from remotetypes.iterable import RemoteIterator
 
 
 class RemoteList(rt.RList):
@@ -44,13 +44,10 @@ class RemoteList(rt.RList):
 
     def iter(self, current: Optional[Ice.Current] = None) -> rt.IterablePrx:
         """Create an iterable object for the StringSet."""
-        #adapter = current.adapter
-        #servant = ListIterable(self._storage)
-        #proxy = adapter.addWithUUID(servant)
-        #return rt.IterablePrx.checkedCast(proxy)
+        servant = RemoteIterator(self._storage)  # Asocia la lista almacenada al iterador remoto
+        proxy = current.adapter.addWithUUID(servant)  # Registra el iterador en el adaptador
+        return rt.IterablePrx.uncheckedCast(proxy)  # Devuelve un proxy del iterador
         
-        
-
     def getItem(self, index: int, current: Optional[Ice.Current] = None) -> str:
         """Get an item from the StringSet."""
         try:

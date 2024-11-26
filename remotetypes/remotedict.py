@@ -2,7 +2,7 @@ from typing import Optional
 import Ice  # type: ignore
 import RemoteTypes as rt  # noqa: F401; pylint: disable=import-error
 from remotetypes.customset import StringSet
-#from remotetypes.iterable import DictIterable
+from remotetypes.iterable import RemoteIterator
 
 
 class RemoteDict(rt.RDict):
@@ -50,8 +50,6 @@ class RemoteDict(rt.RDict):
 
     def iter(self, current: Optional[Ice.Current] = None) -> rt.IterablePrx:
         """Create an iterable object for the StringSet dictionary."""
-        #adapter = current.adapter
-        #servant = DictIterable(self._storage)
-        #proxy = adapter.addWithUUID(servant)
-        #return rt.IterablePrx.checkedCast(proxy)
-
+        servant = RemoteIterator(self._storage.items())  # Pasa los pares clave-valor como iterador
+        proxy = current.adapter.addWithUUID(servant)  # Registra el iterador en el adaptador
+        return rt.IterablePrx.uncheckedCast(proxy)  # Devuelve un proxy del iterador

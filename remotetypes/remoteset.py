@@ -43,8 +43,11 @@ class RemoteSet(rt.RSet):
 
     def iter(self, current: Optional[Ice.Current] = None) -> rt.IterablePrx:
         """Create an iterable object."""
-        return RemoteIterator(self)
-     
+        adapter = current.adapter
+        servant = RemoteIterator(self._storage_)  # Pasa el almacenamiento (StringSet)
+        proxy = adapter.addWithUUID(servant)  # Añade el iterador al adaptador
+        return rt.IterablePrx.checkedCast(proxy)  # Devuelve el proxy del iterador
+
 
     def add(self, item: str, current: Optional[Ice.Current] = None) -> None:
         """Add a new string to the StringSet."""

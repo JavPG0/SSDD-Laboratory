@@ -50,18 +50,24 @@ def interact_with_rset(rset):
         elif option == "5":
             print(f"Hash del conjunto: {rset.hash()}.")
         elif option == "6":
+            try:
+                # Obtener el iterador remoto
                 iterable = rset.iter()
+                # Continuar obteniendo elementos hasta que termine
                 while True:
-                    try:
-                        item = next(iterable)
-                        print(item)
-                    except rt.StopIteration:
-                        print("Fin de la iteración.")
-                        break
+                    item = iterable.next()  # Utiliza next directamente sobre el iterador
+                    print(item)
+            except rt.StopIteration:
+                print("Fin de la iteración.")
+            except rt.CancelIteration:
+                print("La iteración fue cancelada debido a un cambio en el conjunto.")
+            except Exception as e:
+                print(f"Error inesperado: {str(e)}")
         elif option == "0":
             break
         else:
             print("Opción no válida.")
+
 
 
 def interact_with_rlist(rlist):
@@ -101,8 +107,17 @@ def interact_with_rlist(rlist):
         elif option == "5":
             print(f"Hash de la lista: {rlist.hash()}.")
         elif option == "6":
-            iterable = rlist.iter()
-            interact_with_iterable(iterable)
+            try:
+                iterable = rlist.iter()
+                while True:
+                    item = iterable.next()
+                    print(item)
+            except rt.StopIteration:
+                print("Fin de la iteración.")
+            except rt.CancelIteration:
+                print("La iteración fue cancelada debido a un cambio en la lista.")
+            except Exception as e:
+                print(f"Error inesperado: {str(e)}")
         elif option == "0":
             break
         else:
@@ -145,8 +160,17 @@ def interact_with_rdict(rdict):
         elif option == "5":
             print(f"Hash del diccionario: {rdict.hash()}.")
         elif option == "6":
-            iterable = rdict.iter()
-            interact_with_iterable(iterable)
+            try:
+                iterable = rdict.iter()
+                while True:
+                    item = iterable.next()
+                    print(item)
+            except rt.StopIteration:
+                print("Fin de la iteración.")
+            except rt.CancelIteration:
+                print("La iteración fue cancelada debido a un cambio en el diccionario.")
+            except Exception as e:
+                print(f"Error inesperado: {str(e)}")
         elif option == "0":
             break
         else:
@@ -154,6 +178,7 @@ def interact_with_rdict(rdict):
 
 
 def main():
+    """Principal method main of the client class, which interacts with the server."""
     if len(sys.argv) != 2:
         print("Uso: python client.py \"factory -t -e 1.1:tcp -h <host> -p <port> -t <timeout>\"")
         return
