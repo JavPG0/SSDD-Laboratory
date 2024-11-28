@@ -30,6 +30,7 @@ class StringSet(set):
 
         return super().add(item)
 
+
     def __contains__(self, o: object) -> bool:
         """Overwrite the `in` operator.
 

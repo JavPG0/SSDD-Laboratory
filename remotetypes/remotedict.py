@@ -1,55 +1,124 @@
-from typing import Optional
-import Ice  # type: ignore
-import RemoteTypes as rt  # noqa: F401; pylint: disable=import-error
-from remotetypes.customset import StringSet
+import json
+from typing import Optional, Dict
+
+import RemoteTypes as rt  # Asegúrate de que esté correctamente importado
+import hashlib
 from remotetypes.iterable import RemoteIterator
 
-
 class RemoteDict(rt.RDict):
-    """Implementation of the remote interface RDict."""
+    """Clase que implementa un diccionario remoto con persistencia."""
 
-    def __init__(self, identifier: str) -> None:
-        """Initialise a RemoteDict with an empty StringSet."""
-        self._storage = StringSet()  # Usamos StringSet para las claves
-        self.id_ = identifier
+    def __init__(self, identifier: str = None) -> None:
+        """
+        Inicializa un diccionario remoto.
 
-    def identifier(self, current: Optional[Ice.Current] = None) -> str:
-        """Return the identifier of the object."""
-        return self.id_
+        :param identifier: Identificador único para la persistencia.
+        """
+        self.identifier = identifier or "default_dict"  # Nombre por defecto si no se proporciona uno
+        self.storage: Dict[str, str] = {}
+        self.file_path = f"{identifier}_dict.json"
+        self._load()  # Carga los datos persistidos si existen
 
-    def setItem(self, key: str, item: str, current: Optional[Ice.Current] = None) -> None:
-        """Set an item in the StringSet dictionary."""
-        self._storage.add(key)  # Almacenamos las claves en el StringSet, sin valores
+    def _log(self, action: str) -> None:
+        """Log an action related to the JSON file."""
+        print(f"[RemoteDict] {action} archivo: {self.file_path}")
 
-    def getItem(self, key: str, current: Optional[Ice.Current] = None) -> str:
-        """Get an item from the StringSet dictionary."""
-        if key in self._storage:
-            return self._storage[key]  # Devolvemos el valor asociado a la clave
-        raise rt.KeyError(key)
+    def _save(self) -> None:
+        """Guarda el diccionario actual en un archivo JSON."""
 
-    def pop(self, key: str, current: Optional[Ice.Current] = None) -> str:
-        """Pop an item from the StringSet dictionary."""
+        with open(self.file_path, "w", encoding="utf-8") as file:
+            json.dump(self.storage, file)
+        self._log("Datos guardados en")
+
+    def _load(self) -> None:
+        """Carga el diccionario desde un archivo JSON, si existe."""
         try:
-            self._storage.remove(key)
-            return key  # El valor devuelto es la clave eliminada
-        except KeyError as exc:
-            raise rt.KeyError(key) from exc
+            with open(self.file_path, "r", encoding="utf-8") as file:
+                self.storage = json.load(file)
+            self._log("Cargado desde")
+        except FileNotFoundError:
+            self._log("Creado")
 
-    def length(self, current: Optional[Ice.Current] = None) -> int:
-        """Return the number of items in the StringSet dictionary."""
-        return len(self._storage)
+    def setItem(self, key: str, item: str, current: Optional[rt.Ice.Current] = None) -> None:
+        """
+        Establece un valor en el diccionario remoto con una clave específica.
 
-    def contains(self, item: str, current: Optional[Ice.Current] = None) -> bool:
-        """Check if the StringSet contains an item."""
-        return item in self._storage
+        :param key: Clave para el valor.
+        :param item: Valor a asociar con la clave.
+        """
+        self.storage[key] = item
+        self._save()
+        self._log(f"Elemento añadido: {key} -> {item} en")
 
-    def hash(self, current: Optional[Ice.Current] = None) -> int:
-        """Calculate a hash for the StringSet dictionary."""
-        contents = sorted(self._storage)
-        return hash(repr(contents))
+    def remove(self, item: str, current: Optional[rt.Ice.Current] = None) -> None:
+        """
+        Elimina un valor del diccionario remoto.
 
-    def iter(self, current: Optional[Ice.Current] = None) -> rt.IterablePrx:
-        """Create an iterable object for the StringSet dictionary."""
-        servant = RemoteIterator(self._storage.items())  # Pasa los pares clave-valor como iterador
+        :param item: Valor a eliminar.
+        :raises rt.KeyError: Si la clave no existe.
+        """
+        if item in self.storage:
+            del self.storage[item]
+            self._save()
+            self._log(f"Elemento eliminado: {item} de")
+        else:
+            raise rt.KeyError(key=item)
+
+    def getItem(self, key: str, current: Optional[rt.Ice.Current] = None) -> str:
+        """
+        Obtiene un valor del diccionario remoto usando la clave.
+
+        :param key: Clave del valor a recuperar.
+        :return: El valor asociado a la clave.
+        :raises rt.KeyError: Si la clave no existe.
+        """
+        if key in self.storage:
+            return self.storage[key]
+        else:
+            raise rt.KeyError(key=key)
+
+    def contains(self, key: str, current: Optional[rt.Ice.Current] = None) -> bool:
+        """
+        Verifica si una clave existe en el diccionario remoto.
+
+        :param key: Clave a buscar.
+        :return: True si la clave existe, False en caso contrario.
+        """
+        return key in self.storage
+
+    def length(self, current: Optional[rt.Ice.Current] = None) -> int:
+        """
+        Devuelve el número de elementos en el diccionario remoto.
+
+        :return: Número de elementos.
+        """
+        return len(self.storage)
+
+    def iter(self, current: Optional[rt.Ice.Current] = None) -> rt.IterablePrx:
+        """
+        Devuelve un iterador remoto para recorrer el diccionario.
+
+        :return: Proxy de un iterador remoto.
+        """
+        servant = RemoteIterator(self.storage)  # Pasa los pares clave-valor al iterador
         proxy = current.adapter.addWithUUID(servant)  # Registra el iterador en el adaptador
-        return rt.IterablePrx.uncheckedCast(proxy)  # Devuelve un proxy del iterador
+        return rt.IterablePrx.uncheckedCast(proxy)
+
+    def pop(self, key: str, current: Optional[rt.Ice.Current] = None) -> str:
+        """Elimina un ítem del diccionario por su clave y devuelve el valor."""
+        if key in self.storage:
+            value = self.storage.pop(key)  # Elimina el ítem y devuelve el valor
+            self._save()  # Guarda los cambios
+            return value
+        else:
+            raise rt.KeyError(key=key)  # Lanza KeyError si la clave no existe
+        
+    def hash(self, current: Optional[rt.Ice.Current] = None) -> int:
+        """Calcula y devuelve un hash único reducido para el diccionario."""
+        # Convierte los elementos del diccionario a una cadena ordenada
+        items = "".join(f"{key}:{value}" for key, value in sorted(self.storage.items()))
+        # Calcula el hash SHA-256
+        hash_hex = hashlib.sha256(items.encode('utf-8')).hexdigest()
+        # Convierte el hash hexadecimal en un entero y reduce el tamaño
+        hash_int = int(hash_hex, 16)
+        return hash_int % (2**31 - 1)  # Reduce el entero para que sea manejable por Ice

@@ -89,6 +89,7 @@ def interact_with_rlist(rlist):
             print(f"Elemento '{item}' añadido.")
         elif option == "2":
             index = input("Índice (opcional, presiona Enter para omitir): ")
+            if(index == ""): index = rlist.length() - 1
             try:
                 if index:
                     print(f"Elemento eliminado: {rlist.pop(int(index))}.")
@@ -193,7 +194,7 @@ def main():
                 print("No se pudo castear el proxy a rt.FactoryPrx.")
                 return
 
-            print("Conexión con la fábrica establecida.")
+            print("Conexión con 'factory' exitosa.")
 
             while True:
                 print("\nSelecciona el tipo de objeto:")
