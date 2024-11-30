@@ -6,6 +6,50 @@
 
 Template for the SSDD laboratory 2024-2025
 
+---
+## Student instructions for running the programme
+```
+python3 -m venv .venv
+```
+This command creates a virtual environment called .venv in the current directory. A virtual environment helps manage project-specific dependencies without affecting the global system environment. To activate the virtual environment, use the following command:
+```
+source .venv/bin/activate
+```
+Once the virtual environment is active, install the project dependencies using the following command:
+```
+pip install -e .
+```
+This command installs the project in editable mode, which means any changes made to the source code will immediately reflect without needing to reinstall the package. Install the zeroc-ice library, which is required for communication between the client and serv
+```
+pip install zeroc-ice
+```
+
+### To run the server
+Make sure that the ‘remotetypes.config’ file contains the following content, if not, change it: 
+```
+remotetypes.Endpoints=tcp -p 10000
+```
+Then, to run the server: 
+```
+remotetypes --Ice.Config=config/remotetypes.config
+```
+This command starts the server with the configuration settings defined in the remotetypes.config file. The file includes important parameters for setting up remote communication and connecting clients. 
+When you run the server, if it is working properly, you should get a message on the screen, something like: 
+>INFO:remotetypes:Running remotetypes server...
+>INFO:/addressToFile/ssdd-remote-types/remotetypes/server.py:Proxy: "factory -t -e 1.1:tcp -h <host> -p <port> -t <timeout>"
+
+Where the host, the port and the timeout, will be those of the server, which tells you for the client to connect. 
+
+### To run the client
+If yo are in the path of the client: 
+```
+python3 client.py "<factory -t -e 1.1:tcp -h <host> -p <port> -t <timeout>"
+```
+>❗ TIP!
+> When you go to run the client, simply type in your terminal "python3 ~/path/to/directory/remotetypes/client.py"  and then paste in the message that the server showed you when you ran it, as indicated above, in a format similar to: "factory -t -e 1.1:tcp -h <host> -p <port> -t <timeout>". Remember to put " ".
+
+
+
 ## Installation
 
 To locally install the package, just run
