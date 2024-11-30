@@ -1,18 +1,20 @@
 import Ice
-import RemoteTypes as rt  # Asegúrate de que esté correctamente importado
+import RemoteTypes as rt  # noqa: F401; pylint: disable=import-error
 from typing import Optional
 
 
 class RemoteIterator(rt.Iterable):
-    """Iterador remoto para los objetos RSet, RList y RDict."""
+    """Remote Iterator for RSet, RList and RDict objects."""
     
+    #Initialises the iterator with a collection.
     def __init__(self, collection) -> None:
-        """Inicializa el iterador con una colección."""
+        """Initialises the iterator with a collection."""
         self._collection = collection  # Recibe la colección (StringSet, RList, RDict)
         self._iterator = iter(self._collection)  # Crea un iterador sobre la colección
 
+    #Returns the next item in the collection.
     def next(self, current: Optional[Ice.Current] = None) -> str:
-        """Devuelve el siguiente elemento de la colección."""
+        """Returns the next item in the collection."""
         try:
             return next(self._iterator)  # Devuelve el siguiente elemento
         except StopIteration as exc:
